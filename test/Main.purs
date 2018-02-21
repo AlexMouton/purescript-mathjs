@@ -1,25 +1,30 @@
 module Test.Main where
 
-import Prelude
+import Prelude (bind, discard, join, negate, ($), (<$>), (<*>), (==))
 
-import Data.Maybe 
+
+import Data.Maybe
 import Data.Either
-import Data.Tuple 
+import Data.Tuple
+import Data.Traversable (sequence)
 
 import Control.Bind
 import Control.Monad.Eff
 import Control.Monad.Eff.Console
 import Control.Monad.Eff.Class
 
+import Partial.Unsafe
+
 import Test.Unit (test, suite)
 import Test.Unit.Main (runTest)
 import Test.Unit.Assert as Assert
 
-import Mathjs.Util
+-- import Mathjs.Util
 import Mathjs.Geometry
-import Mathjs.Matrix
+import Mathjs.Matrix (MatrixError(..), det, diag, dot, eye, eye', flatten, getData, getSizes, inv, make, ones, ones', trace, transpose, zeros, zeros')
+import Mathjs.Expression
 
-
+main :: _
 main = runTest do
     suite "Geometry" do
 
@@ -36,6 +41,71 @@ main = runTest do
             let l3 = Line (Point2D 2.0 8.0) (Point2D 10.0 8.0) -- same as above
             Assert.assert "should be intersect at 5.0 8.0" $ (intersect l1 l2) == Just (Point2D 5.0 8.0)
             Assert.assert "should not intersect" $ (intersect l2 l2) == Nothing
+
+    suite "Expression" do
+        test "compile" do
+          let str = "x = 3"
+          cmp <- liftEff $ compile str
+          Assert.assert "Compiles good" $ isRight cmp
+
+        test "eval boolean" do
+          let str = "x = false"
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to Boolean" $ (ExpBoolean false) == (fst $ unsafePartial $ fromRight ev)
+
+        test "eval number" do
+          let str = "x = 3"
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to Number" $ (ExpNumber 3.0) == (fst $ unsafePartial $ fromRight ev)
+
+        test "eval string" do
+          let str = "x = \"hehe\""
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to String" $ (ExpString "hehe") == (fst $ unsafePartial $ fromRight ev)
+
+        test "eval vector" do
+          let str = "x = [1,2,3,4]"
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to vector" $ (ExpVector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} ) == (fst $ unsafePartial $ fromRight ev)
+
+
+        test "eval matrix" do
+          let str = "x = [[1,2],[3,4]]"
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to matrix" $ (ExpMatrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]}) == (fst $ unsafePartial $ fromRight ev)
+
+        test "eval other" do
+          let str = "x = { y: 3 }"
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to undefined" $ (ExpUndefined) == (fst $ unsafePartial $ fromRight ev)
+
+        test "set scope" do
+          let str = "haha = \"nono\""
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to String" $ (ExpString "nono") == (fst $ unsafePartial $ fromRight ev)
+          Assert.assert "assigns nono" $ "nono" == ( _.haha $ snd $ unsafePartial $ fromRight ev)
+
 
     suite "Matrix" do
 
@@ -104,14 +174,14 @@ main = runTest do
                 let m1 = make [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
                 let r = join $ det <$> m1
                 Assert.assert "should be SquareMatrixExpected" $ r == (Left SquareMatrixExpected)
-    
+
             test "success" do
                 let m1 = make [[-2.0, 2.0, 3.0], [-1.0, 1.0, 3.0], [2.0, 0.0, -1.0]]
                 let r = join $ det <$> m1
                 Assert.assert "should be success" $ r == (Right 6.0)
 
         suite "inv" do
-    
+
             test "is not a square matrix" do
                 let m1 = make [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
                 let r = join $ inv <$> m1
@@ -124,21 +194,21 @@ main = runTest do
                 Assert.assert "should be success" $ d == (Right  [[-2.0, 1.0], [1.5, -0.5]])
 
         suite "transpose" do
-    
+
             test "success" do
                 let m1 = make [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
                 let r = getData <$> transpose <$> m1
                 Assert.assert "should be success" $ r == (Right [[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]])
 
         suite "flatten" do
-    
+
             test "success" do
                 let m1 = make [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
                 let r = getData <$> flatten <$> m1
                 Assert.assert "should be success" $ r == (Right [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0]])
 
         suite "trace" do
-    
+
             test "is not a square matrix" do
                 let m1 = make [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
                 let r = join $ trace <$> m1
@@ -150,7 +220,7 @@ main = runTest do
                 Assert.assert "should be success" $ r == (Right 6.0)
 
         suite "diag" do
-    
+
             test "is not a square matrix" do
                 let m1 = make [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
                 let r = join $ diag <$> m1
