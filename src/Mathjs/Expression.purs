@@ -27,7 +27,7 @@ data Result = Undefined
   | Vector VectorF
   | Matrix MatrixF
   -- | Object ObjectF
-  | Set (Array Result)
+  | ResultSet (Array Result)
 
 instance showResult :: Show Result where
   show Undefined = "Undefined"
@@ -36,7 +36,7 @@ instance showResult :: Show Result where
   show (String a)  = "(String " <> show a <> ")"
   show (Vector a)  = "(Vector " <> show a._data <> " " <> show a._size <> ")"
   show (Matrix a)  = "(Matrix " <> show a._data <> " " <> show a._size <> ")"
-  show (Set a)  = "(Set " <> show a <> ")"
+  show (ResultSet a) = "(ResultSet " <> show a <> ")"
 
 instance eqResult :: Eq Result where
   eq Undefined Undefined = true
@@ -45,7 +45,7 @@ instance eqResult :: Eq Result where
   eq (String a) (String b) = eq a b
   eq (Vector a) (Vector b) = (eq a._data b._data) && (eq a._size b._size)
   eq (Matrix a) (Matrix b) = (eq a._data b._data) && (eq a._size b._size)
-  eq (Set a) (Set b) = eq a b
+  eq (ResultSet a) (ResultSet b) = eq a b
   eq _ _ = false
 
 type ExpressionF = { eval :: ∀ r eff. (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r)) }
@@ -76,4 +76,4 @@ compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS | eff) (Either Error Expres
 compile = _compile Left Right
 
 eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r))
-eval = _eval Tuple Undefined Boolean Number String Vector Matrix Set
+eval = _eval Tuple Undefined Boolean Number String Vector Matrix ResultSet
