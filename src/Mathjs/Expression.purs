@@ -6,8 +6,7 @@ import Data.Tuple (Tuple(..))
 import Control.Monad.Eff (Eff, kind Effect)
 import Mathjs.Matrix (MatrixF)
 import Mathjs.Vector (VectorF)
-
-foreign import data MATHJS :: Effect
+import Mathjs.Util (MATHJS)
 
 type Scope r = { | r }
 type Error = String
