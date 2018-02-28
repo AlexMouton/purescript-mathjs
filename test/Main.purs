@@ -90,8 +90,8 @@ main = runTest do
           Assert.assert "Evals good" $ isRight ev
           Assert.assert "Evaluates to matrix" $ (Exp.Matrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]}) == (fst $ unsafePartial $ fromRight ev)
 
-        test "eval other" do
-          let str = "x = { y: 3 }"
+        test "eval complex" do
+          let str = "x = 2i"
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
           ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
