@@ -23,8 +23,8 @@ type BigNumberF = { d :: Array Number, e :: Number, s :: Number }
 type ComplexF = { re :: Number, im :: Number }
 
  -- // The expression parser supports booleans, numbers, bignumber, complex numbers, units, strings, matrices, and objects.
-data Result = Undefined
-  | Boolean Boolean
+data Result =
+  Boolean Boolean
   | Number Number
   -- | BigNumber BigNumberF
   -- | Complex ComplexF
@@ -34,9 +34,9 @@ data Result = Undefined
   | Matrix MatrixF
   | Object (Array (Tuple String Result))
   | ResultSet (Array Result)
+  | Undefined
 
 instance showResult :: Show Result where
-  show Undefined = "Undefined"
   show (Boolean a) = "(Boolean " <> show a <> ")"
   show (Number a) = "(Number " <> show a <> ")"
   show (String a) = "(String " <> show a <> ")"
@@ -44,9 +44,9 @@ instance showResult :: Show Result where
   show (Matrix a) = "(Matrix " <> show a._data <> " " <> show a._size <> ")"
   show (Object a) = "(Object " <> show a <> ")"
   show (ResultSet a) = "(ResultSet " <> show a <> ")"
+  show Undefined = "Undefined"
 
 instance eqResult :: Eq Result where
-  eq Undefined Undefined = true
   eq (Boolean a) (Boolean b) = eq a b
   eq (Number a) (Number b) = eq a b
   eq (String a) (String b) = eq a b
@@ -54,12 +54,8 @@ instance eqResult :: Eq Result where
   eq (Matrix a) (Matrix b) = (eq a._data b._data) && (eq a._size b._size)
   eq (Object a) (Object b) = eq a b
   eq (ResultSet a) (ResultSet b) = eq a b
+  eq Undefined Undefined = true
   eq _ _ = false
-
-
-isUndefined :: Result -> Boolean
-isUndefined Undefined = true
-isUndefined _ = false
 
 isBoolean :: Result -> Boolean
 isBoolean (Boolean _) = true
@@ -89,6 +85,13 @@ isResultSet :: Result -> Boolean
 isResultSet (ResultSet _) = true
 isResultSet _ = false
 
+
+isUndefined :: Result -> Boolean
+isUndefined Undefined = true
+isUndefined _ = false
+
+
+
 lookup :: Result -> String -> Maybe Result
 lookup (Object a) str = T.lookup str a
 lookup _ _ = Nothing
@@ -106,7 +109,6 @@ foreign import _compile ::
 foreign import _eval ::
   ∀ r eff.
   (Result -> (Scope r) -> Tuple Result (Scope r)) ->
-  (Result) ->
   (Boolean -> Result) ->
   (Number -> Result) ->
   (String -> Result) ->
@@ -115,6 +117,7 @@ foreign import _eval ::
   (String -> Result -> Tuple String Result) ->
   (Array (Tuple String Result) -> Result) ->
   (Array Result -> Result) ->
+  (Result) ->
   ExpressionF ->
   (Scope r) ->
   Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r))
@@ -123,4 +126,4 @@ compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS | eff) (Either Error Expres
 compile = _compile Left Right
 
 eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r))
-eval = _eval Tuple Undefined Boolean Number String Vector Matrix Tuple Object ResultSet
+eval = _eval Tuple Boolean Number String Vector Matrix Tuple Object ResultSet Undefined
