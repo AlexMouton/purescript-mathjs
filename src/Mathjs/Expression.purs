@@ -11,13 +11,22 @@ import Mathjs.Util (MATHJS)
 type Scope r = { | r }
 type Error = String
 
+-- Decimal
+type BigNumberF = { d :: Array Number, e :: Number, s :: Number }
+-- Complex
+type ComplexF = { re :: Number, im :: Number }
+
  -- // The expression parser supports booleans, numbers, bignumber, complex numbers, units, strings, matrices, and objects.
 data Result = Undefined
   | Boolean Boolean
   | Number Number
+  -- | BigNumber BigNumberF
+  -- | Complex ComplexF
+  -- | Unit UnitF
   | String String
   | Vector VectorF
   | Matrix MatrixF
+  -- | Object ObjectF
   | Set (Array Result)
 
 instance showResult :: Show Result where
