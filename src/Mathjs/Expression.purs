@@ -34,6 +34,7 @@ data Result =
   | Matrix MatrixF
   | Object (Array (Tuple String Result))
   | ResultSet (Array Result)
+  | Exception String
   | Undefined
 
 instance showResult :: Show Result where
@@ -44,6 +45,7 @@ instance showResult :: Show Result where
   show (Matrix a) = "(Matrix " <> show a._data <> " " <> show a._size <> ")"
   show (Object a) = "(Object " <> show a <> ")"
   show (ResultSet a) = "(ResultSet " <> show a <> ")"
+  show (Exception a) = "(Exception " <> show a <> ")"
   show Undefined = "Undefined"
 
 instance eqResult :: Eq Result where
@@ -54,6 +56,7 @@ instance eqResult :: Eq Result where
   eq (Matrix a) (Matrix b) = (eq a._data b._data) && (eq a._size b._size)
   eq (Object a) (Object b) = eq a b
   eq (ResultSet a) (ResultSet b) = eq a b
+  eq (Exception a) (Exception b) = eq a b
   eq Undefined Undefined = true
   eq _ _ = false
 
@@ -85,6 +88,9 @@ isResultSet :: Result -> Boolean
 isResultSet (ResultSet _) = true
 isResultSet _ = false
 
+isException :: Result -> Boolean
+isException (Exception _) = true
+isException _ = false
 
 isUndefined :: Result -> Boolean
 isUndefined Undefined = true
@@ -117,6 +123,7 @@ foreign import _eval ::
   (String -> Result -> Tuple String Result) ->
   (Array (Tuple String Result) -> Result) ->
   (Array Result -> Result) ->
+  (String -> Result) ->
   (Result) ->
   ExpressionF ->
   (Scope r) ->
@@ -126,4 +133,4 @@ compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS | eff) (Either Error Expres
 compile = _compile Left Right
 
 eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r))
-eval = _eval Tuple Boolean Number String Vector Matrix Tuple Object ResultSet Undefined
+eval = _eval Tuple Boolean Number String Vector Matrix Tuple Object ResultSet Exception Undefined

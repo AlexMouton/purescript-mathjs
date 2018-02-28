@@ -58,16 +58,22 @@ exports._eval =
               return function( pair ) {
                 return function( obj ) {
                   return function( set ) {
+                    return function( excep ) {
                       return function( undef ) {
                         return function( exp ) {
                           return function( scope ) {
                             return function() {
                               var sc = Object.assign({}, scope)
                               var rval = undef
+                              try {
                                 var res = exp.eval(sc)
                                 rval = demux( bool, number, string, vector, matrix, pair, obj, set, undef, res )
+                              } catch (error) {
+                                rval = excep(error.toString())
+                              }
                               // console.log('eval', rval, scope )
                               return tuple(rval)(sc)
+                            }
                           }
                         }
                       }

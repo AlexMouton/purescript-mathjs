@@ -97,6 +97,13 @@ main = runTest do
           Assert.assert "Evals good" $ isRight ev
           Assert.assert "Evaluates to Object" $ (Exp.Object [Tuple "x" (Exp.String "haha"), Tuple "y" (Exp.Number 3.0)]) == (fst $ unsafePartial $ fromRight ev)
 
+        test "eval exception" do
+          let str = "x = 3/\"haha\""
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to Exception" $ (Exp.Exception "Error: Cannot convert \"haha\" to a number") == (fst $ unsafePartial $ fromRight ev)
 
         test "eval complex" do
           let str = "x = 2i"
