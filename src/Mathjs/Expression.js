@@ -27,9 +27,9 @@ function demux( undef, bool, number, string, vector, matrix, pair, obj, set, res
     rval = string(res)
   } else if ( rtype === 'object') {
     if( res.type === 'DenseMatrix' ) {
-      if( typeof res._data[0] == 'number') {
+      if( res._size.length == 1 ) {
         rval = vector(res)
-      } else {
+      } else if ( res._size.length == 2 ) {
         rval = matrix(res)
       }
     } else if ( res.type === 'ResultSet') {
