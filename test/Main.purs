@@ -1,30 +1,31 @@
 module Test.Main where
 
-import Prelude (bind, discard, join, negate, ($), (<$>), (<*>), (==))
+import Prelude (Unit, bind, discard, join, map, negate, ($), (<$>), (<*>), (==))
 
-
-import Data.Maybe
-import Data.Either
-import Data.Tuple
+import Data.Maybe (Maybe(..))
+import Data.Either (Either(..), fromRight, isRight)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Traversable (sequence)
 
-import Control.Bind
-import Control.Monad.Eff
-import Control.Monad.Eff.Console
-import Control.Monad.Eff.Class
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Eff.AVar (AVAR)
 
-import Partial.Unsafe
+import Partial.Unsafe (unsafePartial)
 
 import Test.Unit (test, suite)
+import Test.Unit.Console (TESTOUTPUT)
 import Test.Unit.Main (runTest)
 import Test.Unit.Assert as Assert
 
 -- import Mathjs.Util
-import Mathjs.Geometry
+import Mathjs.Geometry (Line(..), Point2D(..), distance, intersect)
 import Mathjs.Matrix (MatrixError(..), det, diag, dot, eye, eye', flatten, getData, getSizes, inv, make, ones, ones', trace, transpose, zeros, zeros')
-import Mathjs.Expression
+import Mathjs.Expression as Exp
+import Mathjs.Util (MATHJS)
 
-main :: _
+main :: forall eff. Eff ( console :: CONSOLE , testOutput :: TESTOUTPUT , avar :: AVAR, mathjs :: MATHJS | eff ) Unit
 main = runTest do
     suite "Geometry" do
 
@@ -45,65 +46,65 @@ main = runTest do
     suite "Expression" do
         test "compile" do
           let str = "x = 3"
-          cmp <- liftEff $ compile str
+          cmp <- liftEff $ Exp.compile str
           Assert.assert "Compiles good" $ isRight cmp
 
         test "eval boolean" do
           let str = "x = false"
           let scope = { haha: "Haha" }
-          cmp <- liftEff $ compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
           Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to Boolean" $ (ExpBoolean false) == (fst $ unsafePartial $ fromRight ev)
+          Assert.assert "Evaluates to Boolean" $ (Exp.Boolean false) == (fst $ unsafePartial $ fromRight ev)
 
         test "eval number" do
           let str = "x = 3"
           let scope = { haha: "Haha" }
-          cmp <- liftEff $ compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
           Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to Number" $ (ExpNumber 3.0) == (fst $ unsafePartial $ fromRight ev)
+          Assert.assert "Evaluates to Number" $ (Exp.Number 3.0) == (fst $ unsafePartial $ fromRight ev)
 
         test "eval string" do
           let str = "x = \"hehe\""
           let scope = { haha: "Haha" }
-          cmp <- liftEff $ compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
           Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to String" $ (ExpString "hehe") == (fst $ unsafePartial $ fromRight ev)
+          Assert.assert "Evaluates to String" $ (Exp.String "hehe") == (fst $ unsafePartial $ fromRight ev)
 
         test "eval vector" do
           let str = "x = [1,2,3,4]"
           let scope = { haha: "Haha" }
-          cmp <- liftEff $ compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
           Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to vector" $ (ExpVector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} ) == (fst $ unsafePartial $ fromRight ev)
+          Assert.assert "Evaluates to vector" $ (Exp.Vector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} ) == (fst $ unsafePartial $ fromRight ev)
 
 
         test "eval matrix" do
           let str = "x = [[1,2],[3,4]]"
           let scope = { haha: "Haha" }
-          cmp <- liftEff $ compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
           Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to matrix" $ (ExpMatrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]}) == (fst $ unsafePartial $ fromRight ev)
+          Assert.assert "Evaluates to matrix" $ (Exp.Matrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]}) == (fst $ unsafePartial $ fromRight ev)
 
         test "eval other" do
           let str = "x = { y: 3 }"
           let scope = { haha: "Haha" }
-          cmp <- liftEff $ compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
           Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to undefined" $ (ExpUndefined) == (fst $ unsafePartial $ fromRight ev)
+          Assert.assert "Evaluates to undefined" $ (Exp.Undefined) == (fst $ unsafePartial $ fromRight ev)
 
         test "set scope" do
           let str = "haha = \"nono\""
           let scope = { haha: "Haha" }
-          cmp <- liftEff $ compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map eval cmp
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
           Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to String" $ (ExpString "nono") == (fst $ unsafePartial $ fromRight ev)
+          Assert.assert "Evaluates to String" $ (Exp.String "nono") == (fst $ unsafePartial $ fromRight ev)
           Assert.assert "assigns nono" $ "nono" == ( _.haha $ snd $ unsafePartial $ fromRight ev)
 
 
