@@ -2,7 +2,10 @@ module Mathjs.Expression where
 
 import Prelude
 import Data.Either (Either(..))
-import Data.Tuple (Tuple(..))
+import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..), fst)
+import Data.Tuple as T
+import Data.Foldable (find)
 
 import Control.Monad.Eff (Eff, kind Effect)
 
@@ -85,6 +88,9 @@ isResultSet :: Result -> Boolean
 isResultSet (ResultSet _) = true
 isResultSet _ = false
 
+lookup :: Result -> String -> Maybe Result
+lookup (Object a) str = T.lookup str a
+lookup _ _ = Nothing
 
 type ExpressionF = { eval :: ∀ r eff. (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r)) }
 type Expression = ExpressionF
