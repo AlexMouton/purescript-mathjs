@@ -52,6 +52,40 @@ instance eqResult :: Eq Result where
   eq (ResultSet a) (ResultSet b) = eq a b
   eq _ _ = false
 
+
+isUndefined :: Result -> Boolean
+isUndefined Undefined = true
+isUndefined _ = false
+
+isBoolean :: Result -> Boolean
+isBoolean (Boolean _) = true
+isBoolean _ = false
+
+isNumber :: Result -> Boolean
+isNumber (Number _) = true
+isNumber _ = false
+
+isString :: Result -> Boolean
+isString (String _) = true
+isString _ = false
+
+isVector :: Result -> Boolean
+isVector (Vector _) = true
+isVector _ = false
+
+isMatrix :: Result -> Boolean
+isMatrix (Matrix _) = true
+isMatrix _ = false
+
+isObject :: Result -> Boolean
+isObject (Object _) = true
+isObject _ = false
+
+isResultSet :: Result -> Boolean
+isResultSet (ResultSet _) = true
+isResultSet _ = false
+
+
 type ExpressionF = { eval :: ∀ r eff. (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r)) }
 type Expression = ExpressionF
 
