@@ -31,12 +31,12 @@ data Result = Undefined
 
 instance showResult :: Show Result where
   show Undefined = "Undefined"
-  show (Boolean a)  = "(Boolean" <> show a <> ")"
-  show (Number a)  = "(Number" <> show a <> ")"
-  show (String a)  = "(String" <> show a <> ")"
-  show (Vector a)  = "(Vector" <> show a._data <> " " <> show a._size <> ")"
-  show (Matrix a)  = "(Matrix" <> show a._data <> " " <> show a._size <> ")"
-  show (Set a)  = "(Set" <> show a <> ")"
+  show (Boolean a)  = "(Boolean " <> show a <> ")"
+  show (Number a)  = "(Number " <> show a <> ")"
+  show (String a)  = "(String " <> show a <> ")"
+  show (Vector a)  = "(Vector " <> show a._data <> " " <> show a._size <> ")"
+  show (Matrix a)  = "(Matrix " <> show a._data <> " " <> show a._size <> ")"
+  show (Set a)  = "(Set " <> show a <> ")"
 
 instance eqResult :: Eq Result where
   eq Undefined Undefined = true
