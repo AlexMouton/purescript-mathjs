@@ -8,6 +8,7 @@ import Data.Tuple as T
 import Data.Foldable (find)
 
 import Control.Monad.Eff (Eff, kind Effect)
+import Control.Monad.Eff.Exception (EXCEPTION)
 
 import Mathjs.Matrix (MatrixF)
 import Mathjs.Vector (VectorF)
@@ -92,7 +93,7 @@ lookup :: Result -> String -> Maybe Result
 lookup (Object a) str = T.lookup str a
 lookup _ _ = Nothing
 
-type ExpressionF = { eval :: ∀ r eff. (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r)) }
+type ExpressionF = { eval :: ∀ r eff. (Scope r) -> Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff ) (Tuple Result (Scope r)) }
 type Expression = ExpressionF
 
 foreign import _compile ::
