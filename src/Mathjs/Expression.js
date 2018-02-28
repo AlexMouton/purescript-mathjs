@@ -16,7 +16,7 @@ exports._compile = function(left) {
   }
 }
 
-function demux( undef, bool, number, string, vector, matrix, set, res ) {
+function demux( undef, bool, number, string, vector, matrix, pair, obj, set, res ) {
   var rval = undef
   var rtype = typeof res
   if( rtype === 'boolean' ) {
@@ -33,7 +33,13 @@ function demux( undef, bool, number, string, vector, matrix, set, res ) {
         rval = matrix(res)
       }
     } else if ( res.type === 'ResultSet') {
-      rval = set( res.entries.map( function(e) { return demux(undef, bool, number, string, vector, matrix, set, e) } ) )
+      rval = set( res.entries.map( function(e) { return demux(undef, bool, number, string, vector, matrix, pair, obj, set, e) } ) )
+    } else if ( !res.type ) {
+      const pairs = Object.keys(res).map( function(key) {
+          var val = demux(undef, bool, number, string, vector, matrix, pair, obj, set, res[key])
+          return pair(key)(val)
+        })
+      rval = obj(pairs)
     }
   }
   // console.log('demux', res, rtype, rval);
@@ -50,15 +56,19 @@ exports._eval =
           return function( string ) {
             return function( vector ) {
               return function( matrix ) {
-                return function( set ) {
-                  return function( exp ) {
-                    return function( scope ) {
-                      return function() {
-                        var sc = Object.assign({}, scope)
-                        var res = exp.eval(sc)
-                        var rval = demux(undef, bool, number, string, vector, matrix, set, res )
-                        // console.log('eval', rval, scope )
-                        return tuple(rval)(sc)
+                return function( pair ) {
+                  return function( obj ) {
+                    return function( set ) {
+                      return function( exp ) {
+                        return function( scope ) {
+                          return function() {
+                            var sc = Object.assign({}, scope)
+                            var res = exp.eval(sc)
+                            var rval = demux( undef, bool, number, string, vector, matrix, pair, obj, set, res )
+                            // console.log('eval', rval, scope )
+                            return tuple(rval)(sc)
+                          }
+                        }
                       }
                     }
                   }

@@ -81,7 +81,6 @@ main = runTest do
           Assert.assert "Evals good" $ isRight ev
           Assert.assert "Evaluates to vector" $ (Exp.Vector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} ) == (fst $ unsafePartial $ fromRight ev)
 
-
         test "eval matrix" do
           let str = "x = [[1,2],[3,4]]"
           let scope = { haha: "Haha" }
@@ -89,6 +88,15 @@ main = runTest do
           ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
           Assert.assert "Evals good" $ isRight ev
           Assert.assert "Evaluates to matrix" $ (Exp.Matrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]}) == (fst $ unsafePartial $ fromRight ev)
+
+        test "eval object" do
+          let str = "x = {x: \"haha\", y: 3}"
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
+          Assert.assert "Evals good" $ isRight ev
+          Assert.assert "Evaluates to Object" $ (Exp.Object [Tuple "x" (Exp.String "haha"), Tuple "y" (Exp.Number 3.0)]) == (fst $ unsafePartial $ fromRight ev)
+
 
         test "eval complex" do
           let str = "x = 2i"

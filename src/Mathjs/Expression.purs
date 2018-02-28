@@ -3,7 +3,9 @@ module Mathjs.Expression where
 import Prelude
 import Data.Either (Either(..))
 import Data.Tuple (Tuple(..))
+
 import Control.Monad.Eff (Eff, kind Effect)
+
 import Mathjs.Matrix (MatrixF)
 import Mathjs.Vector (VectorF)
 import Mathjs.Util (MATHJS)
@@ -26,16 +28,17 @@ data Result = Undefined
   | String String
   | Vector VectorF
   | Matrix MatrixF
-  -- | Object ObjectF
+  | Object (Array (Tuple String Result))
   | ResultSet (Array Result)
 
 instance showResult :: Show Result where
   show Undefined = "Undefined"
-  show (Boolean a)  = "(Boolean " <> show a <> ")"
-  show (Number a)  = "(Number " <> show a <> ")"
-  show (String a)  = "(String " <> show a <> ")"
-  show (Vector a)  = "(Vector " <> show a._data <> " " <> show a._size <> ")"
-  show (Matrix a)  = "(Matrix " <> show a._data <> " " <> show a._size <> ")"
+  show (Boolean a) = "(Boolean " <> show a <> ")"
+  show (Number a) = "(Number " <> show a <> ")"
+  show (String a) = "(String " <> show a <> ")"
+  show (Vector a) = "(Vector " <> show a._data <> " " <> show a._size <> ")"
+  show (Matrix a) = "(Matrix " <> show a._data <> " " <> show a._size <> ")"
+  show (Object a) = "(Object " <> show a <> ")"
   show (ResultSet a) = "(ResultSet " <> show a <> ")"
 
 instance eqResult :: Eq Result where
@@ -45,6 +48,7 @@ instance eqResult :: Eq Result where
   eq (String a) (String b) = eq a b
   eq (Vector a) (Vector b) = (eq a._data b._data) && (eq a._size b._size)
   eq (Matrix a) (Matrix b) = (eq a._data b._data) && (eq a._size b._size)
+  eq (Object a) (Object b) = eq a b
   eq (ResultSet a) (ResultSet b) = eq a b
   eq _ _ = false
 
@@ -67,6 +71,8 @@ foreign import _eval ::
   (String -> Result) ->
   (VectorF -> Result) ->
   (MatrixF -> Result) ->
+  (String -> Result -> Tuple String Result) ->
+  (Array (Tuple String Result) -> Result) ->
   (Array Result -> Result) ->
   ExpressionF ->
   (Scope r) ->
@@ -76,4 +82,4 @@ compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS | eff) (Either Error Expres
 compile = _compile Left Right
 
 eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r))
-eval = _eval Tuple Undefined Boolean Number String Vector Matrix ResultSet
+eval = _eval Tuple Undefined Boolean Number String Vector Matrix Tuple Object ResultSet
