@@ -46,7 +46,7 @@ instance showResult :: Show Result where
   show (Object a) = "(Object " <> show a <> ")"
   show (ResultSet a) = "(ResultSet " <> show a <> ")"
   show (Exception a) = "(Exception " <> show a <> ")"
-  show Undefined = "Undefined"
+  show Undefined = "(Undefined)"
 
 instance eqResult :: Eq Result where
   eq (Boolean a) (Boolean b) = eq a b
