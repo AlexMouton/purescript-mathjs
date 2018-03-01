@@ -1,21 +1,19 @@
 module Mathjs.Expression where
 
 import Prelude
-import Data.Either (Either(..))
+
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..), fst)
+import Data.Tuple (Tuple(..))
 import Data.Tuple as T
-import Data.Foldable (find)
 
 import Control.Monad.Eff (Eff, kind Effect)
-import Control.Monad.Eff.Exception (EXCEPTION)
+import Control.Monad.Eff.Exception (Error, EXCEPTION)
 
 import Mathjs.Matrix (MatrixF)
 import Mathjs.Vector (VectorF)
 import Mathjs.Util (MATHJS)
 
 type Scope r = { | r }
-type Error = String
 
 -- Decimal
 type BigNumberF = { d :: Array Number, e :: Number, s :: Number }
@@ -34,7 +32,7 @@ data Result =
   | Matrix MatrixF
   | Object (Array (Tuple String Result))
   | ResultSet (Array Result)
-  | Exception String
+  | Exception Error
   | Undefined
 
 instance showResult :: Show Result where
@@ -97,7 +95,6 @@ isUndefined Undefined = true
 isUndefined _ = false
 
 
-
 lookup :: Result -> String -> Maybe Result
 lookup (Object a) str = T.lookup str a
 lookup _ _ = Nothing
@@ -107,10 +104,8 @@ type Expression = ExpressionF
 
 foreign import _compile ::
   ∀ eff.
-  (Error -> Either Error ExpressionF) ->
-  (ExpressionF -> Either Error ExpressionF) ->
   String ->
-  Eff ( mathjs :: MATHJS | eff ) (Either Error ExpressionF)
+  Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff ) ExpressionF
 
 foreign import _eval ::
   ∀ r eff.
@@ -123,14 +118,13 @@ foreign import _eval ::
   (String -> Result -> Tuple String Result) ->
   (Array (Tuple String Result) -> Result) ->
   (Array Result -> Result) ->
-  (String -> Result) ->
   (Result) ->
   ExpressionF ->
   (Scope r) ->
-  Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r))
+  Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff ) (Tuple Result (Scope r))
 
-compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS | eff) (Either Error Expression)
-compile = _compile Left Right
+compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff) Expression
+compile = _compile
 
-eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS | eff ) (Tuple Result (Scope r))
-eval = _eval Tuple Boolean Number String Vector Matrix Tuple Object ResultSet Exception Undefined
+eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff ) (Tuple Result (Scope r))
+eval = _eval Tuple Boolean Number String Vector Matrix Tuple Object ResultSet Undefined

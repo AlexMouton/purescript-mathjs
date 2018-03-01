@@ -1,15 +1,16 @@
 module Test.Main where
 
-import Prelude (Unit, bind, discard, join, map, negate, ($), (<$>), (<*>), (==))
+import Prelude (Unit, bind, discard, join, map, negate, ($), (<$>), (<*>), (==), (<<<), show)
 
 import Data.Maybe (Maybe(..))
-import Data.Either (Either(..), fromRight, isRight)
+import Data.Either (Either(..), fromRight, isRight, isLeft)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Traversable (sequence)
 
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Eff.Exception (try, EXCEPTION)
 import Control.Monad.Eff.AVar (AVAR)
 
 import Partial.Unsafe (unsafePartial)
@@ -25,7 +26,7 @@ import Mathjs.Matrix (MatrixError(..), det, diag, dot, eye, eye', flatten, getDa
 import Mathjs.Expression as Exp
 import Mathjs.Util (MATHJS)
 
-main :: forall eff. Eff ( console :: CONSOLE , testOutput :: TESTOUTPUT , avar :: AVAR, mathjs :: MATHJS | eff ) Unit
+main :: forall eff. Eff ( console :: CONSOLE , testOutput :: TESTOUTPUT , avar :: AVAR, mathjs :: MATHJS, ex :: EXCEPTION | eff ) Unit
 main = runTest do
     suite "Geometry" do
 
@@ -44,83 +45,81 @@ main = runTest do
             Assert.assert "should not intersect" $ (intersect l2 l2) == Nothing
 
     suite "Expression" do
-        test "compile" do
+      suite "Compilation" do
+        test "success" do
           let str = "x = 3"
-          cmp <- liftEff $ Exp.compile str
+          cmp <- liftEff $ try $ Exp.compile str
           Assert.assert "Compiles good" $ isRight cmp
 
+        test "failure" do
+          let str = "x ="
+          cmp <- liftEff $ try $ Exp.compile str
+          Assert.assert "Compiles bad" $ isLeft cmp
+
+      suite "Eval" do
         test "eval boolean" do
           let str = "x = false"
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to Boolean" $ (Exp.Boolean false) == (fst $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to Boolean" $ (Exp.Boolean false) == (fst ev)
 
         test "eval number" do
           let str = "x = 3"
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to Number" $ (Exp.Number 3.0) == (fst $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to Number" $ (Exp.Number 3.0) == (fst ev)
 
         test "eval string" do
           let str = "x = \"hehe\""
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to String" $ (Exp.String "hehe") == (fst $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to String" $ (Exp.String "hehe") == (fst ev)
 
         test "eval vector" do
           let str = "x = [1,2,3,4]"
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to vector" $ (Exp.Vector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} ) == (fst $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to vector" $ (Exp.Vector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} ) == (fst ev)
 
         test "eval matrix" do
           let str = "x = [[1,2],[3,4]]"
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to matrix" $ (Exp.Matrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]}) == (fst $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to matrix" $ (Exp.Matrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]}) == (fst ev)
 
         test "eval object" do
           let str = "x = {x: \"haha\", y: 3}"
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to Object" $ (Exp.Object [Tuple "x" (Exp.String "haha"), Tuple "y" (Exp.Number 3.0)]) == (fst $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to Object" $ (Exp.Object [Tuple "x" (Exp.String "haha"), Tuple "y" (Exp.Number 3.0)]) == (fst ev)
 
         test "eval exception" do
           let str = "x = 3/\"haha\""
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to Exception" $ (Exp.Exception "Error: Cannot convert \"haha\" to a number") == (fst $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ try $ Exp.eval cmp scope
+          Assert.assert "Evaluates to Exception" $ isLeft ev
 
         test "eval complex" do
-          let str = "x = 2i"
+          let str = "x = 4 - 2i"
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to undefined" $ (Exp.Undefined) == (fst $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to undefined" $ (Exp.Undefined) == (fst ev)
 
         test "set scope" do
           let str = "haha = \"nono\""
           let scope = { haha: "Haha" }
           cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ sequence $ map (\f -> f scope) $ map Exp.eval cmp
-          Assert.assert "Evals good" $ isRight ev
-          Assert.assert "Evaluates to String" $ (Exp.String "nono") == (fst $ unsafePartial $ fromRight ev)
-          Assert.assert "assigns nono" $ "nono" == ( _.haha $ snd $ unsafePartial $ fromRight ev)
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to String" $ (Exp.String "nono") == (fst ev)
+          Assert.assert "assigns nono" $ "nono" == ( _.haha $ snd ev)
 
 
     suite "Matrix" do

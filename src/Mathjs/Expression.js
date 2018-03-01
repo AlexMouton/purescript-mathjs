@@ -2,17 +2,9 @@
 
 var mathjs = require("mathjs");
 
-exports._compile = function(left) {
-  return function(right) {
-    return function(expr) {
-      return function() {
-        try {
-          return right(mathjs.compile(expr))
-        } catch(error) {
-           return left(error)
-        }
-      }
-    }
+exports._compile = function(expr) {
+  return function() {
+    return mathjs.compile(expr);
   }
 }
 
@@ -58,22 +50,15 @@ exports._eval =
               return function( pair ) {
                 return function( obj ) {
                   return function( set ) {
-                    return function( excep ) {
-                      return function( undef ) {
-                        return function( exp ) {
-                          return function( scope ) {
-                            return function() {
-                              var sc = Object.assign({}, scope)
-                              var rval = undef
-                              try {
-                                var res = exp.eval(sc)
-                                rval = demux( bool, number, string, vector, matrix, pair, obj, set, undef, res )
-                              } catch (error) {
-                                rval = excep(error.toString())
-                              }
-                              // console.log('eval', rval, scope )
-                              return tuple(rval)(sc)
-                            }
+                    return function( undef ) {
+                      return function( exp ) {
+                        return function( scope ) {
+                          return function() {
+                            var sc = Object.assign({}, scope)
+                            var res = exp.eval(sc)
+                            var rval = demux( bool, number, string, vector, matrix, pair, obj, set, undef, res )
+                            // console.log('eval', rval, scope )
+                            return tuple(rval)(sc)
                           }
                         }
                       }
