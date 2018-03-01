@@ -26,7 +26,7 @@ import Mathjs.Matrix (MatrixError(..), det, diag, dot, eye, eye', flatten, getDa
 import Mathjs.Expression as Exp
 import Mathjs.Util (MATHJS)
 
-main :: forall eff. Eff ( console :: CONSOLE , testOutput :: TESTOUTPUT , avar :: AVAR, mathjs :: MATHJS, ex :: EXCEPTION | eff ) Unit
+main :: forall eff. Eff ( console :: CONSOLE , testOutput :: TESTOUTPUT , avar :: AVAR, mathjs :: MATHJS, exception :: EXCEPTION | eff ) Unit
 main = runTest do
     suite "Geometry" do
 
