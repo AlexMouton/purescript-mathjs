@@ -107,18 +107,22 @@ foreign import _compile ::
   String ->
   Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) ExpressionF
 
+type Constructors = {
+  bool :: (Boolean -> Result),
+  number :: (Number -> Result),
+  string :: (String -> Result),
+  vector :: (VectorF -> Result),
+  matrix :: (MatrixF -> Result),
+  pair :: (String -> Result -> Tuple String Result),
+  obj :: (Array (Tuple String Result) -> Result),
+  set :: (Array Result -> Result),
+  undef :: (Result)
+}
+
 foreign import _eval ::
   ∀ r eff.
   (Result -> (Scope r) -> Tuple Result (Scope r)) ->
-  (Boolean -> Result) ->
-  (Number -> Result) ->
-  (String -> Result) ->
-  (VectorF -> Result) ->
-  (MatrixF -> Result) ->
-  (String -> Result -> Tuple String Result) ->
-  (Array (Tuple String Result) -> Result) ->
-  (Array Result -> Result) ->
-  (Result) ->
+  Constructors ->
   ExpressionF ->
   (Scope r) ->
   Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) (Tuple Result (Scope r))
@@ -127,4 +131,4 @@ compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | e
 compile = _compile
 
 eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) (Tuple Result (Scope r))
-eval = _eval Tuple Boolean Number String Vector Matrix Tuple Object ResultSet Undefined
+eval = _eval Tuple { bool: Boolean, number: Number, string: String, vector: Vector, matrix: Matrix, pair: Tuple, obj: Object, set: ResultSet, undef: Undefined }

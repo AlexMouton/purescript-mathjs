@@ -8,30 +8,30 @@ exports._compile = function(expr) {
   }
 }
 
-function demux( bool, number, string, vector, matrix, pair, obj, set, undef, res ) {
-  var rval = undef
+function demux( constructors, res ) {
+  var rval = constructors.undef
   var rtype = typeof res
   if( rtype === 'boolean' ) {
-    rval = bool(res)
+    rval = constructors.bool(res)
   } else if( rtype === 'number') {
-    rval = number(res)
+    rval = constructors.number(res)
   } else if ( rtype === 'string' ) {
-    rval = string(res)
+    rval = constructors.string(res)
   } else if ( rtype === 'object') {
     if( res.type === 'DenseMatrix' ) {
       if( res._size.length == 1 ) {
-        rval = vector(res)
+        rval = constructors.vector(res)
       } else if ( res._size.length == 2 ) {
-        rval = matrix(res)
+        rval = constructors.matrix(res)
       }
     } else if ( res.type === 'ResultSet') {
-      rval = set( res.entries.map( function(e) { return demux(bool, number, string, vector, matrix, pair, obj, set, undef, e) } ) )
+      rval = constructors.set( res.entries.map( function(e) { return demux( constructors, e ) } ) )
     } else if ( !res.type ) {
       const pairs = Object.keys(res).map( function(key) {
-          var val = demux(bool, number, string, vector, matrix, pair, obj, set, undef, res[key])
-          return pair(key)(val)
+          var val = demux( constructors, res[key] )
+          return constructors.pair(key)(val)
         })
-      rval = obj(pairs)
+      rval = constructors.obj(pairs)
     }
   }
   // console.log('demux', res, rtype, rval);
@@ -41,32 +41,16 @@ function demux( bool, number, string, vector, matrix, pair, obj, set, undef, res
 // The expression parser supports booleans, numbers, complex numbers, units, strings, matrices, and objects.
 // Units
 exports._eval =
-  function( tuple ) {
-    return function( bool ) {
-      return function( number ) {
-        return function( string ) {
-          return function( vector ) {
-            return function( matrix ) {
-              return function( pair ) {
-                return function( obj ) {
-                  return function( set ) {
-                    return function( undef ) {
-                      return function( exp ) {
-                        return function( scope ) {
-                          return function() {
-                            var sc = Object.assign({}, scope)
-                            var res = exp.eval(sc)
-                            var rval = demux( bool, number, string, vector, matrix, pair, obj, set, undef, res )
-                            // console.log('eval', rval, scope )
-                            return tuple(rval)(sc)
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+  function( eo ) {
+    return function( constructors ) {
+      return function( exp ) {
+        return function( scope ) {
+          return function() {
+            var sc = Object.assign({}, scope)
+            var res = exp.eval(sc)
+            var rval = demux( constructors, res )
+            // console.log('eval', rval, scope )
+            return eo(rval)(sc)
           }
         }
       }
