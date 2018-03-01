@@ -56,7 +56,7 @@ instance eqResult :: Eq Result where
   eq (Matrix a) (Matrix b) = (eq a._data b._data) && (eq a._size b._size)
   eq (Object a) (Object b) = eq a b
   eq (ResultSet a) (ResultSet b) = eq a b
-  eq (Exception a) (Exception b) = eq a b
+  eq (Exception a) (Exception b) = false
   eq Undefined Undefined = true 
   eq _ _ = false
 
