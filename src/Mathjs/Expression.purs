@@ -55,7 +55,7 @@ instance eqResult :: Eq Result where
   eq (Object a) (Object b) = eq a b
   eq (ResultSet a) (ResultSet b) = eq a b
   eq (Exception a) (Exception b) = false
-  eq Undefined Undefined = true 
+  eq Undefined Undefined = true
   eq _ _ = false
 
 isBoolean :: Result -> Boolean
@@ -99,13 +99,13 @@ lookup :: Result -> String -> Maybe Result
 lookup (Object a) str = T.lookup str a
 lookup _ _ = Nothing
 
-type ExpressionF = { eval :: ∀ r eff. (Scope r) -> Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff ) (Tuple Result (Scope r)) }
+type ExpressionF = { eval :: ∀ r eff. (Scope r) -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) (Tuple Result (Scope r)) }
 type Expression = ExpressionF
 
 foreign import _compile ::
   ∀ eff.
   String ->
-  Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff ) ExpressionF
+  Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) ExpressionF
 
 foreign import _eval ::
   ∀ r eff.
@@ -121,10 +121,10 @@ foreign import _eval ::
   (Result) ->
   ExpressionF ->
   (Scope r) ->
-  Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff ) (Tuple Result (Scope r))
+  Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) (Tuple Result (Scope r))
 
-compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff) Expression
+compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff) Expression
 compile = _compile
 
-eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS, ex :: EXCEPTION | eff ) (Tuple Result (Scope r))
+eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) (Tuple Result (Scope r))
 eval = _eval Tuple Boolean Number String Vector Matrix Tuple Object ResultSet Undefined
