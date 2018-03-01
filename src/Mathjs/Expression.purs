@@ -57,7 +57,7 @@ instance eqResult :: Eq Result where
   eq (Object a) (Object b) = eq a b
   eq (ResultSet a) (ResultSet b) = eq a b
   eq (Exception a) (Exception b) = eq a b
-  eq Undefined Undefined = true
+  eq Undefined Undefined = true 
   eq _ _ = false
 
 isBoolean :: Result -> Boolean
