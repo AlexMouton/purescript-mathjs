@@ -26,6 +26,12 @@ import Mathjs.Matrix (MatrixError(..), det, diag, dot, eye, eye', flatten, getDa
 import Mathjs.Expression as Exp
 import Mathjs.Util (MATHJS)
 
+expresult str r = do
+  let scope = { haha: "Haha" }
+  cmp <- liftEff $ Exp.compile str
+  ev <- liftEff $ Exp.eval cmp scope
+  Assert.assert "Evaluates to Boolean" $ r == (fst ev)
+
 main :: forall eff. Eff ( console :: CONSOLE , testOutput :: TESTOUTPUT , avar :: AVAR, mathjs :: MATHJS, exception :: EXCEPTION | eff ) Unit
 main = runTest do
     suite "Geometry" do
@@ -57,61 +63,14 @@ main = runTest do
           Assert.assert "Compiles bad" $ isLeft cmp
 
       suite "Eval" do
-        test "eval boolean" do
-          let str = "x = false"
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to Boolean" $ (Exp.Boolean false) == (fst ev)
-
-        test "eval number" do
-          let str = "x = 3"
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to Number" $ (Exp.Number 3.0) == (fst ev)
-
-        test "eval bignumber" do
-          let str = "x = bignumber(100)"
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to BigNumber" $ (Exp.BigNumber {s: 1.0, e: 2.0, d: [100.0]}) == (fst ev)
-
-        test "eval complex" do
-          let str = "x = 4 - 2i"
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to Complex" $ (Exp.Complex {re: 4.0, im: -2.0}) == (fst ev)
-
-        test "eval string" do
-          let str = "x = \"hehe\""
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to String" $ (Exp.String "hehe") == (fst ev)
-
-        test "eval vector" do
-          let str = "x = [1,2,3,4]"
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to vector" $ (Exp.Vector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} ) == (fst ev)
-
-        test "eval matrix" do
-          let str = "x = [[1,2],[3,4]]"
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to matrix" $ (Exp.Matrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]}) == (fst ev)
-
-        test "eval object" do
-          let str = "x = {x: \"haha\", y: 3}"
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to Object" $ (Exp.Object [Tuple "x" (Exp.String "haha"), Tuple "y" (Exp.Number 3.0)]) == (fst ev)
+        test "eval boolean" $ expresult "x = false" (Exp.Boolean false)
+        test "eval number" $ expresult "x = 3" (Exp.Number 3.0)
+        test "eval bignumber" $ expresult "x = bignumber(100)" (Exp.BigNumber {s: 1.0, e: 2.0, d: [100.0]})
+        test "eval complex" $ expresult "x = 4 - 2i" (Exp.Complex {re: 4.0, im: -2.0})
+        test "eval string" $ expresult "x = \"hehe\"" (Exp.String "hehe")
+        test "eval vector" $ expresult "x = [1,2,3,4]" (Exp.Vector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} )
+        test "eval matrix" $ expresult "x = [[1,2],[3,4]]" (Exp.Matrix {_data: [[1.0, 2.0], [3.0, 4.0]], _size: [2,2]})
+        test "eval object" $ expresult "x = {x: \"haha\", y: 3}" (Exp.Object [Tuple "x" (Exp.String "haha"), Tuple "y" (Exp.Number 3.0)])
 
         test "eval exception" do
           let str = "x = 3/\"haha\""
