@@ -16,7 +16,7 @@ import Mathjs.Util (MATHJS)
 type Scope r = { | r }
 
 type BigNumberF = { d :: Array Number, e :: Number, s :: Number }
-
+type FractionF = {s :: Number, n :: Number, d :: Number}
 type ComplexF = { re :: Number, im :: Number }
 
  -- // The expression parser supports booleans, numbers, bignumber, complex numbers, units, strings, matrices, and objects.
@@ -24,6 +24,7 @@ data Result =
   Boolean Boolean
   | Number Number
   | BigNumber BigNumberF
+  | Fraction FractionF
   | Complex ComplexF
   -- | Unit UnitF
   | String String
@@ -38,6 +39,7 @@ instance showResult :: Show Result where
   show (Boolean a) = "(Boolean " <> show a <> ")"
   show (Number a) = "(Number " <> show a <> ")"
   show (BigNumber a) = "(BigNumber " <> show a.d <> " " <> show a.e <> " " <> show a.s <> ")"
+  show (Fraction a) = "(Fraction " <> show a.s <> " " <> show a.n <> " " <> show a.d <> ")"
   show (Complex a) = "(Complex " <> show a.re <> " " <> show a.im <> ")"
   show (String a) = "(String " <> show a <> ")"
   show (Vector a) = "(Vector " <> show a._data <> " " <> show a._size <> ")"
@@ -51,6 +53,7 @@ instance eqResult :: Eq Result where
   eq (Boolean a) (Boolean b) = eq a b
   eq (Number a) (Number b) = eq a b
   eq (BigNumber a) (BigNumber b) = (eq a.d b.d) && (eq a.e b.e) && (eq a.s b.s)
+  eq (Fraction a) (Fraction b) = (eq a.s b.s) && (eq a.n b.n) && (eq a.d b.d)
   eq (Complex a) (Complex b) = (eq a.re b.re) && (eq a.im b.im)
   eq (String a) (String b) = eq a b
   eq (Vector a) (Vector b) = (eq a._data b._data) && (eq a._size b._size)
@@ -72,6 +75,10 @@ isNumber _ = false
 isBigNumber :: Result -> Boolean
 isBigNumber (BigNumber _) = true
 isBigNumber _ = false
+
+isFraction :: Result -> Boolean
+isFraction (Fraction _) = true
+isFraction _ = false
 
 isComplex :: Result -> Boolean
 isComplex (Complex _) = true
@@ -122,6 +129,7 @@ type Constructors = {
   bool :: (Boolean -> Result),
   number :: (Number -> Result),
   bignumber :: (BigNumberF -> Result),
+  fraction :: (FractionF -> Result),
   complex :: (ComplexF -> Result),
   string :: (String -> Result),
   vector :: (VectorF -> Result),
@@ -144,4 +152,4 @@ compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | e
 compile = _compile
 
 eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) (Tuple Result (Scope r))
-eval = _eval Tuple { bool: Boolean, number: Number, bignumber: BigNumber, complex: Complex, string: String, vector: Vector, matrix: Matrix, pair: Tuple, obj: Object, set: ResultSet, undef: Undefined }
+eval = _eval Tuple { bool: Boolean, number: Number, bignumber: BigNumber, fraction: Fraction, complex: Complex, string: String, vector: Vector, matrix: Matrix, pair: Tuple, obj: Object, set: ResultSet, undef: Undefined }

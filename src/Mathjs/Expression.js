@@ -28,6 +28,8 @@ function demux( constructors, res ) {
       rval = constructors.set( res.entries.map( function(e) { return demux( constructors, e ) } ) )
     } else if( res.type === 'BigNumber') {
       rval = constructors.bignumber(res)
+    } else if( res.type === 'Fraction') {
+      rval = constructors.fraction(res)
     } else if( res.type === 'Complex') {
       rval = constructors.complex(res)
     } else if ( !res.type ) {

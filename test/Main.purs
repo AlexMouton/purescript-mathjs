@@ -66,6 +66,7 @@ main = runTest do
         test "eval boolean" $ expresult "x = false" (Exp.Boolean false)
         test "eval number" $ expresult "x = 3" (Exp.Number 3.0)
         test "eval bignumber" $ expresult "x = bignumber(100)" (Exp.BigNumber {s: 1.0, e: 2.0, d: [100.0]})
+        test "eval fraction" $ expresult "x = fraction(100, 200)" (Exp.Fraction {s: 1.0, n: 1.0, d: 2.0})
         test "eval complex" $ expresult "x = 4 - 2i" (Exp.Complex {re: 4.0, im: -2.0})
         test "eval string" $ expresult "x = \"hehe\"" (Exp.String "hehe")
         test "eval vector" $ expresult "x = [1,2,3,4]" (Exp.Vector {_data: [1.0, 2.0, 3.0, 4.0], _size: [4]} )
