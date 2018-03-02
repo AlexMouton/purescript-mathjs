@@ -25,7 +25,7 @@ data Result =
   Boolean Boolean
   | Number Number
   -- | BigNumber BigNumberF
-  -- | Complex ComplexF
+  | Complex ComplexF
   -- | Unit UnitF
   | String String
   | Vector VectorF
@@ -38,6 +38,7 @@ data Result =
 instance showResult :: Show Result where
   show (Boolean a) = "(Boolean " <> show a <> ")"
   show (Number a) = "(Number " <> show a <> ")"
+  show (Complex a) = "(Complex " <> show a.re <> " " <> show a.im <> ")"
   show (String a) = "(String " <> show a <> ")"
   show (Vector a) = "(Vector " <> show a._data <> " " <> show a._size <> ")"
   show (Matrix a) = "(Matrix " <> show a._data <> " " <> show a._size <> ")"
@@ -49,6 +50,7 @@ instance showResult :: Show Result where
 instance eqResult :: Eq Result where
   eq (Boolean a) (Boolean b) = eq a b
   eq (Number a) (Number b) = eq a b
+  eq (Complex a) (Complex b) = (eq a.re b.re) && (eq a.im b.im)
   eq (String a) (String b) = eq a b
   eq (Vector a) (Vector b) = (eq a._data b._data) && (eq a._size b._size)
   eq (Matrix a) (Matrix b) = (eq a._data b._data) && (eq a._size b._size)
@@ -65,6 +67,10 @@ isBoolean _ = false
 isNumber :: Result -> Boolean
 isNumber (Number _) = true
 isNumber _ = false
+
+isComplex :: Result -> Boolean
+isComplex (Complex _) = true
+isComplex _ = false
 
 isString :: Result -> Boolean
 isString (String _) = true
@@ -110,6 +116,7 @@ foreign import _compile ::
 type Constructors = {
   bool :: (Boolean -> Result),
   number :: (Number -> Result),
+  complex :: (ComplexF -> Result),
   string :: (String -> Result),
   vector :: (VectorF -> Result),
   matrix :: (MatrixF -> Result),
@@ -131,4 +138,4 @@ compile :: ∀ eff. String -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | e
 compile = _compile
 
 eval :: ∀ r eff. Expression -> (Scope r) -> Eff ( mathjs :: MATHJS, exception :: EXCEPTION | eff ) (Tuple Result (Scope r))
-eval = _eval Tuple { bool: Boolean, number: Number, string: String, vector: Vector, matrix: Matrix, pair: Tuple, obj: Object, set: ResultSet, undef: Undefined }
+eval = _eval Tuple { bool: Boolean, number: Number, complex: Complex, string: String, vector: Vector, matrix: Matrix, pair: Tuple, obj: Object, set: ResultSet, undef: Undefined }

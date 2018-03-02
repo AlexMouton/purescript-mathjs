@@ -71,6 +71,13 @@ main = runTest do
           ev <- liftEff $ Exp.eval cmp scope
           Assert.assert "Evaluates to Number" $ (Exp.Number 3.0) == (fst ev)
 
+        test "eval complex" do
+          let str = "x = 4 - 2i"
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to Complex" $ (Exp.Complex {re: 4.0, im: -2.0}) == (fst ev)
+
         test "eval string" do
           let str = "x = \"hehe\""
           let scope = { haha: "Haha" }
@@ -105,13 +112,6 @@ main = runTest do
           cmp <- liftEff $ Exp.compile str
           ev <- liftEff $ try $ Exp.eval cmp scope
           Assert.assert "Evaluates to Exception" $ isLeft ev
-
-        test "eval complex" do
-          let str = "x = 4 - 2i"
-          let scope = { haha: "Haha" }
-          cmp <- liftEff $ Exp.compile str
-          ev <- liftEff $ Exp.eval cmp scope
-          Assert.assert "Evaluates to undefined" $ (Exp.Undefined) == (fst ev)
 
         test "set scope" do
           let str = "haha = \"nono\""
