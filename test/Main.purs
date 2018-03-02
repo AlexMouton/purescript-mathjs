@@ -71,6 +71,13 @@ main = runTest do
           ev <- liftEff $ Exp.eval cmp scope
           Assert.assert "Evaluates to Number" $ (Exp.Number 3.0) == (fst ev)
 
+        test "eval bignumber" do
+          let str = "x = bignumber(100)"
+          let scope = { haha: "Haha" }
+          cmp <- liftEff $ Exp.compile str
+          ev <- liftEff $ Exp.eval cmp scope
+          Assert.assert "Evaluates to BigNumber" $ (Exp.BigNumber {s: 1.0, e: 2.0, d: [100.0]}) == (fst ev)
+
         test "eval complex" do
           let str = "x = 4 - 2i"
           let scope = { haha: "Haha" }

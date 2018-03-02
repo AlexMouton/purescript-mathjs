@@ -26,6 +26,8 @@ function demux( constructors, res ) {
       }
     } else if ( res.type === 'ResultSet') {
       rval = constructors.set( res.entries.map( function(e) { return demux( constructors, e ) } ) )
+    } else if( res.type === 'BigNumber') {
+      rval = constructors.bignumber(res)
     } else if( res.type === 'Complex') {
       rval = constructors.complex(res)
     } else if ( !res.type ) {
