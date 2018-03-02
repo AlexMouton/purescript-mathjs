@@ -68,33 +68,65 @@ isBoolean :: Result -> Boolean
 isBoolean (Boolean _) = true
 isBoolean _ = false
 
+getBoolean :: Result -> Maybe Boolean
+getBoolean (Boolean a) = pure a
+getBoolean _ = Nothing
+
 isNumber :: Result -> Boolean
 isNumber (Number _) = true
 isNumber _ = false
+
+getNumber :: Result -> Maybe Number
+getNumber (Number a) = pure a
+getNumber _ = Nothing
 
 isBigNumber :: Result -> Boolean
 isBigNumber (BigNumber _) = true
 isBigNumber _ = false
 
+getBigNumber :: Result -> Maybe BigNumberF
+getBigNumber (BigNumber a) = pure a
+getBigNumber _ = Nothing
+
 isFraction :: Result -> Boolean
 isFraction (Fraction _) = true
 isFraction _ = false
+
+getFraction :: Result -> Maybe FractionF
+getFraction (Fraction a) = pure a
+getFraction _ = Nothing
 
 isComplex :: Result -> Boolean
 isComplex (Complex _) = true
 isComplex _ = false
 
+getComplex :: Result -> Maybe ComplexF
+getComplex (Complex a) = pure a
+getComplex _ = Nothing
+
 isString :: Result -> Boolean
 isString (String _) = true
 isString _ = false
+
+getString :: Result -> Maybe String
+getString (String a) = pure a
+getString _ = Nothing
 
 isVector :: Result -> Boolean
 isVector (Vector _) = true
 isVector _ = false
 
+getVector :: Result -> Maybe VectorF
+getVector (Vector a) = pure a
+getVector _ = Nothing
+
 isMatrix :: Result -> Boolean
 isMatrix (Matrix _) = true
 isMatrix _ = false
+
+getMatrix :: Result -> Maybe MatrixF
+getMatrix (Matrix a) = pure a
+getMatrix _ = Nothing
 
 isObject :: Result -> Boolean
 isObject (Object _) = true
